@@ -9,9 +9,11 @@ class DiceRollApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       home: Scaffold(
         appBar: AppBar(
           title: Text('Dice Roll Game'),
+          backgroundColor: Color.fromRGBO(248, 82, 179, 1),
         ),
         body: Center(
           child: DiceRollScreen(),
@@ -26,76 +28,56 @@ class DiceRollScreen extends StatefulWidget {
   _DiceRollScreenState createState() => _DiceRollScreenState();
 }
 
-class _DiceRollScreenState extends State<DiceRollScreen>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _animation;
-
+class _DiceRollScreenState extends State<DiceRollScreen> {
   int _currentValue = 1;
   int _currentPlayer = 1;
   List<int> _playerScores = [0, 0, 0, 0];
   int _turnCount = 0;
 
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: Duration(seconds: 2),
-    );
+  bool _rolling = false;
 
-    _animation = Tween(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _controller,
-        curve: Curves.easeInOut,
-      ),
-    )..addListener(() {
-      setState(() {
-        _currentValue = (_animation.value * 6).ceil();
-      });
+  void _rollDice() {
+    if (_rolling) {
+      return;
+    }
+
+    int rollValue = Random().nextInt(6) + 1;
+    setState(() {
+      _rolling = true;
+      _currentValue = rollValue;
     });
 
-    _controller.addStatusListener((status) {
-      if (status == AnimationStatus.completed) {
-        _controller.reset();
-        setState(() {
-          _currentValue = Random().nextInt(6) + 1;
-          _playerScores[_currentPlayer - 1] += _currentValue;
+    setState(() {
+      _rolling = false;
+      _playerScores[_currentPlayer - 1] += rollValue;
 
-          if (++_turnCount >= 12) {
-            _showWinnerDialog();
-          } else {
-            _currentPlayer = (_currentPlayer % 4) + 1;
-          }
-        });
+      if (rollValue != 6) {
+        _turnCount++;
+      }
+
+      if (rollValue == 6) {
+        return;
+      }
+
+      if (_turnCount >= 12) {
+        _showWinnerDialog();
+      } else {
+        _currentPlayer = (_currentPlayer % 4) + 1;
       }
     });
   }
 
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  void _rollDice() {
-    if (_controller.isAnimating) {
-      return;
-    }
-    _controller.forward();
-  }
-
   void _showWinnerDialog() {
+    int maxScore = _playerScores.reduce(max);
+    List<int> winners = [];
+    for (int i = 0; i < _playerScores.length; i++) {
+      if (_playerScores[i] == maxScore) {
+        winners.add(i + 1);
+      }
+    }
     showDialog(
       context: context,
       builder: (context) {
-        int maxScore = _playerScores.reduce(max);
-        List<int> winners = [];
-        for (int i = 0; i < _playerScores.length; i++) {
-          if (_playerScores[i] == maxScore) {
-            winners.add(i + 1);
-          }
-        }
         return AlertDialog(
           title: Text('Game Over'),
           content: Text('Player $winners win with a score of $maxScore!'),
@@ -164,35 +146,31 @@ class _DiceRollScreenState extends State<DiceRollScreen>
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.center,
-            children: <Widget>[
+            children: [
               Text(
                 'Player $_currentPlayer\'s Turn',
                 style: TextStyle(
-                  fontSize: 24,
+                  fontSize: 19,
                   fontWeight: FontWeight.bold,
                   color: Colors.black,
                 ),
               ),
               GestureDetector(
                 onTap: _rollDice,
-                child: AnimatedSwitcher(
-                  duration: Duration(milliseconds: 500),
-                  switchInCurve: Curves.easeInOut,
-                  switchOutCurve: Curves.easeInOut,
-                  transitionBuilder: (child, animation) {
-                    return RotationTransition(
-                      turns: animation,
-                      child: child,
-                    );
-                  },
-                  child: Container(
-                    key: ValueKey<int>(_currentValue),
-                    width: 200.0,
-                    height: 200.0,
-                    child: Image.asset(
-                      _getImagePath(_currentValue),
-                    ),
+                child: Container(
+                  width: 150.0,
+                  height: 150.0,
+                  child: Image.asset(
+                    _getImagePath(_currentValue),
                   ),
+                ),
+              ),
+              ElevatedButton(
+                onPressed: _resetGame,
+                child: Text('Reset Game'),
+                style: ElevatedButton.styleFrom(
+                  minimumSize: Size(135, 50),
+                  backgroundColor: Color.fromRGBO(248, 82, 179, 1),
                 ),
               ),
             ],
@@ -212,7 +190,6 @@ class _DiceRollScreenState extends State<DiceRollScreen>
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
-          mainAxisSize: MainAxisSize.min,
           children: [
             Text(
               'Player $playerNumber',
@@ -237,4 +214,3 @@ class _DiceRollScreenState extends State<DiceRollScreen>
     );
   }
 }
-
