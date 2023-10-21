@@ -2,7 +2,48 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 
 void main() {
-  runApp(DiceRollApp());
+  runApp(MaterialApp(
+    debugShowCheckedModeBanner: false,
+    home: DiceRollApp(),
+  ));
+}
+
+void showInstructionsDialog(BuildContext context) {
+  showDialog(
+    context: context,
+    builder: (context) {
+      return AlertDialog(
+        title: Text('Instructions'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Welcome to the Dice Roll Game!',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 10),
+            Text('1. Roll the dice by tapping on it.'),
+            Text('2. Try to get the highest score.'),
+            Text('3. The game ends after 12 turns.'),
+            Text('4. The player with the highest score wins.'),
+            SizedBox(height: 20),
+            Text(
+              'Enjoy the game!',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+            child: Text('Close'),
+          ),
+        ],
+      );
+    },
+  );
 }
 
 class DiceRollApp extends StatelessWidget {
@@ -14,6 +55,49 @@ class DiceRollApp extends StatelessWidget {
         appBar: AppBar(
           title: Text('Dice Roll Game'),
           backgroundColor: Color.fromRGBO(248, 82, 179, 1),
+          actions: [
+            IconButton(
+              icon: Icon(Icons.help_outline),
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  builder: (context) {
+                    return AlertDialog(
+                      title: Text('Instructions'),
+                      content: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            'Welcome to the Dice Roll Game!',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          SizedBox(height: 10),
+                          Text('1. Roll the dice by tapping on it.'),
+                          Text('2. Try to get the highest score.'),
+                          Text('3. The game ends after 12 turns 3 turns each.'),
+                          Text('4. The player with the highest score wins.'),
+                          SizedBox(height: 20),
+                          Text(
+                            'Enjoy the game!',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                        ],
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                          },
+                          child: Text('Close'),
+                        ),
+                      ],
+                    );
+                  },
+                );
+              },
+            ),
+          ],
         ),
         body: Center(
           child: DiceRollScreen(),
@@ -33,10 +117,9 @@ class _DiceRollScreenState extends State<DiceRollScreen> {
   int _currentPlayer = 1;
   List<int> _playerScores = [0, 0, 0, 0];
   int _turnCount = 0;
-
   bool _rolling = false;
 
-  void _rollDice() {
+  void rollDice() {
     if (_rolling) {
       return;
     }
@@ -60,14 +143,14 @@ class _DiceRollScreenState extends State<DiceRollScreen> {
       }
 
       if (_turnCount >= 12) {
-        _showWinnerDialog();
+        showWinnerDialog();
       } else {
         _currentPlayer = (_currentPlayer % 4) + 1;
       }
     });
   }
 
-  void _showWinnerDialog() {
+  void showWinnerDialog() {
     int maxScore = _playerScores.reduce(max);
     List<int> winners = [];
     for (int i = 0; i < _playerScores.length; i++) {
@@ -84,7 +167,7 @@ class _DiceRollScreenState extends State<DiceRollScreen> {
           actions: [
             TextButton(
               onPressed: () {
-                _resetGame();
+                resetGame();
                 Navigator.of(context).pop();
               },
               child: Text('Play Again'),
@@ -102,7 +185,7 @@ class _DiceRollScreenState extends State<DiceRollScreen> {
     );
   }
 
-  void _resetGame() {
+  void resetGame() {
     setState(() {
       _currentValue = 1;
       _currentPlayer = 1;
@@ -111,7 +194,7 @@ class _DiceRollScreenState extends State<DiceRollScreen> {
     });
   }
 
-  String _getImagePath(int value) {
+  String getImagePath(int value) {
     if (value == 0) {
       value++;
     }
@@ -125,22 +208,22 @@ class _DiceRollScreenState extends State<DiceRollScreen> {
         Positioned(
           top: 10,
           left: 10,
-          child: _buildPlayerCard(1, Colors.red),
+          child: buildPlayerCard(1, Colors.red),
         ),
         Positioned(
           top: 10,
           right: 10,
-          child: _buildPlayerCard(2, Colors.green),
+          child: buildPlayerCard(2, Colors.green),
         ),
         Positioned(
           bottom: 10,
           left: 10,
-          child: _buildPlayerCard(3, Colors.blue),
+          child: buildPlayerCard(3, Colors.blue),
         ),
         Positioned(
           bottom: 10,
           right: 10,
-          child: _buildPlayerCard(4, Color.fromARGB(255, 238, 130, 29)),
+          child: buildPlayerCard(4, Color.fromARGB(255, 238, 130, 29)),
         ),
         Center(
           child: Column(
@@ -156,17 +239,17 @@ class _DiceRollScreenState extends State<DiceRollScreen> {
                 ),
               ),
               GestureDetector(
-                onTap: _rollDice,
+                onTap: rollDice,
                 child: Container(
                   width: 150.0,
                   height: 150.0,
                   child: Image.asset(
-                    _getImagePath(_currentValue),
+                    getImagePath(_currentValue),
                   ),
                 ),
               ),
               ElevatedButton(
-                onPressed: _resetGame,
+                onPressed: resetGame,
                 child: Text('Reset Game'),
                 style: ElevatedButton.styleFrom(
                   minimumSize: Size(135, 50),
@@ -180,7 +263,7 @@ class _DiceRollScreenState extends State<DiceRollScreen> {
     );
   }
 
-  Widget _buildPlayerCard(int playerNumber, Color color) {
+  Widget buildPlayerCard(int playerNumber, Color color) {
     return Card(
       color: color,
       elevation: 5,
